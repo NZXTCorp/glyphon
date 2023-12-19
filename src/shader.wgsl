@@ -32,6 +32,14 @@ var mask_atlas_texture: texture_2d<f32>;
 @group(0) @binding(3)
 var atlas_sampler: sampler;
 
+fn linear_component(u: f32) -> f32 {
+    if u < 0.04045 {
+        return u / 12.92;
+    } else {
+        return pow((u + 0.055) / 1.055, 2.4);
+    }
+}
+
 @vertex
 fn vs_main(in_vert: VertexInput) -> VertexOutput {
     var pos = in_vert.pos;
@@ -70,11 +78,11 @@ fn vs_main(in_vert: VertexInput) -> VertexOutput {
     vert_output.position.y *= -1.0;
 
     vert_output.color = vec4<f32>(
-        f32((color & 0x00ff0000u) >> 16u),
-        f32((color & 0x0000ff00u) >> 8u),
-        f32(color & 0x000000ffu),
-        f32((color & 0xff000000u) >> 24u),
-    ) / 255.0;
+        linear_component(f32((color & 0x00ff0000u) >> 16u) / 255.0),
+        linear_component(f32((color & 0x0000ff00u) >> 8u) / 255.0),
+        linear_component(f32(color & 0x000000ffu) / 255.0),
+        f32((color & 0xff000000u) >> 24u) / 255.0,
+    );
 
     var dim: vec2<u32> = vec2(0u);
     switch in_vert.content_type {
